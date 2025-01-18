@@ -17,7 +17,7 @@ void Main::Init()
 	wxBoxSizer* mainSizer;
 	mainSizer = new wxBoxSizer(wxVERTICAL);
 
-	m_Output = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(300, 50), 0);
+	m_Output = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxSize(300, 50), 0);
 	m_Output->SetBackgroundColour(wxColour(0x202020));
 	m_Output->Enable(false);
 
@@ -104,20 +104,34 @@ void Main::OnEqualsClicked(wxCommandEvent& evt)
 
 		if (!m_Output->IsEmpty())
 		{
+			bool valid = true;
+
 			double lhs = std::strtod(m_Memory.c_str(), nullptr);
 			double rhs = std::strtod(m_Output->GetLineText(0).c_str(), nullptr);
-			double result;
+			double result = 0.0;
 
 			switch (m_BinaryOperation)
 			{
 			case BinaryOperation::Addition: result = lhs + rhs; break;
 			case BinaryOperation::Subtraction: result = lhs - rhs; break;
 			case BinaryOperation::Multiplication: result = lhs * rhs; break;
-			case BinaryOperation::Division: result = lhs / rhs; break;
+			case BinaryOperation::Division:
+			{
+				if (rhs == 0.0)
+					valid = false;
+				else
+					result = lhs / rhs;
+			}
+			break;
+
 			}
 
 			wxString text;
-			FormatNumber(result, text);
+
+			if (valid)
+				FormatNumber(result, text);
+			else
+				text = "Invalid input";
 
 			m_Output->SetLabelText(text);
 			m_Memory = text;
@@ -140,9 +154,12 @@ void Main::OnSqrtClicked(wxCommandEvent& evt)
 	if (!m_Output->IsEmpty())
 	{
 		double input = std::strtod(m_Output->GetLineText(0).c_str(), NULL);
-
 		wxString text;
-		FormatNumber(sqrt(input), text);
+
+		if (input >= 0)
+			FormatNumber(sqrt(input), text);
+		else
+			text = "Invalid input!";
 
 		m_Output->SetLabelText(text);
 		m_HasResult = true;
@@ -160,9 +177,6 @@ void Main::OnMultiplyClicked(wxCommandEvent& evt)
 void Main::OnDelClicked(wxCommandEvent& evt)
 {
 	wxString text = m_Output->GetLineText(0);
-
-	if (text.Last() == '.')
-		m_HasDot = false;
 
 	m_Output->SetLabelText(text.RemoveLast());
 	evt.Skip();
@@ -202,11 +216,16 @@ void Main::OnSignClicked(wxCommandEvent& evt)
 
 void Main::OnPointClicked(wxCommandEvent& evt)
 {
-	if (!m_HasDot)
+	if (m_Output->GetLineText(0).Contains('.'))
 	{
-		m_Output->AppendText(".");
-		m_HasDot = true;
+		if (m_HasResult)
+		{
+			m_Output->Clear();
+			m_HasResult = false;
+		}
 	}
+	else
+		m_Output->AppendText(".");
 
 	evt.Skip();
 }
@@ -226,7 +245,6 @@ void Main::SaveToMemory(BinaryOperation operation)
 
 void Main::ResetOutput()
 {
-	m_HasDot = false;
 	m_HasResult = false;
 	m_Output->Clear();
 }

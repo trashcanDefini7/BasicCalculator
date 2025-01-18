@@ -54,10 +54,9 @@ private:
 
 	wxButton* m_NumberBtns[10];
 
-	wxString m_Memory;
+	wxString m_Memory = "0";
 	BinaryOperation m_BinaryOperation = BinaryOperation::None;
 
-	bool m_HasDot = false;
-	bool m_HasResult = false;
+	bool m_HasResult = true;
 
 };
